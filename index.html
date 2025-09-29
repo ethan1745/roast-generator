@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Where Is My Bus</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Bus Tracker">
+    <meta name="description" content="Real-time bus tracking with seat availability">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23667eea'/><text x='50' y='65' text-anchor='middle' font-size='60' fill='white'>🚌</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%23667eea'/><text x='90' y='115' text-anchor='middle' font-size='100' fill='white'>🚌</text></svg>">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json,{
+        &quot;name&quot;: &quot;Bus Tracker&quot;,
+        &quot;short_name&quot;: &quot;BusTracker&quot;,
+        &quot;description&quot;: &quot;Real-time bus tracking with seat availability&quot;,
+        &quot;start_url&quot;: &quot;/&quot;,
+        &quot;display&quot;: &quot;standalone&quot;,
+        &quot;background_color&quot;: &quot;#ffffff&quot;,
+        &quot;theme_color&quot;: &quot;#667eea&quot;,
+        &quot;orientation&quot;: &quot;portrait&quot;,
+        &quot;icons&quot;: [
+            {
+                &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23667eea'/><text x='96' y='125' text-anchor='middle' font-size='120' fill='white'>🚌</text></svg>&quot;,
+                &quot;sizes&quot;: &quot;192x192&quot;,
+                &quot;type&quot;: &quot;image/svg+xml&quot;,
+                &quot;purpose&quot;: &quot;any maskable&quot;
+            },
+            {
+                &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23667eea'/><text x='256' y='330' text-anchor='middle' font-size='300' fill='white'>🚌</text></svg>&quot;,
+                &quot;sizes&quot;: &quot;512x512&quot;,
+                &quot;type&quot;: &quot;image/svg+xml&quot;,
+                &quot;purpose&quot;: &quot;any maskable&quot;
+            }
+        ]
+    }">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .search-container {
+            position: relative;
+            margin: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .route-card {
+            margin: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e1e5e9;
+        }
+
+        .route-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .route-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .route-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .find-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .find-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .bus-list {
+            padding: 20px;
+        }
+
+        .bus-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e1e5e9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bus-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .bus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .bus-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .bus-route {
+            font-size: 14px;
+            color: #666;
+            flex: 1;
+            text-align: center;
+            margin: 0 10px;
+        }
+
+        .seats-info {
+            font-size: 12px;
+            background: #e8f5e8;
+            color: #2d5a2d;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .bus-timing {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .timing-item {
+            text-align: center;
+        }
+
+        .time {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .duration {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .bus-days {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .days-list {
+            display: flex;
+            gap: 4px;
+        }
+
+        .day {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .tracking-page {
+            padding: 20px;
+        }
+
+        .tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .status-cards {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e1e5e9;
+        }
+
+        .status-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-subvalue {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .on-time {
+            color: #22c55e;
+        }
+
+        .delayed {
+            color: #ef4444;
+        }
+
+        .route-tracker {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .route-line {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .route-path {
+            height: 4px;
+            background: #e1e5e9;
+            border-radius: 2px;
+            position: relative;
+            margin: 30px 0;
+        }
+
+        .route-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        .bus-position {
+            position: absolute;
+            top: -8px;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            animation: pulse 2s infinite;
+            transition: left 1s ease;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        .route-stops {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .stop {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            max-width: 80px;
+        }
+
+        .stop-dot {
+            width: 12px;
+            height: 12px;
+            background: #e1e5e9;
+            border-radius: 50%;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .stop.active .stop-dot {
+            background: #22c55e;
+            animation: pulse-green 2s infinite;
+        }
+
+        .stop.completed .stop-dot {
+            background: #22c55e;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        .seat-info {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .seat-count {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .seat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .seat-visual {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .seat {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin: 2px;
+        }
+
+        .seat.available {
+            background: #22c55e;
+        }
+
+        .seat.occupied {
+            background: #ef4444;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .search-history {
+            margin: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e1e5e9;
+        }
+
+        .search-history h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .history-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e1e5e9;
+        }
+
+        .history-item:hover {
+            background: #e3f2fd;
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-bus-number {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .history-route {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .offline-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 9999;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .offline-indicator.online {
+            background: #22c55e;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            display: none;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .install-prompt-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .install-prompt-text {
+            flex: 1;
+            margin-right: 12px;
+        }
+
+        .install-prompt h4 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .install-prompt p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .install-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .install-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .close-install {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .status-cards {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .route-stops {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .route-path {
+                transform: rotate(90deg);
+                width: 200px;
+                margin: 100px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        📡 Offline Mode
+    </div>
+
+    <!-- Install App Prompt -->
+    <div id="installPrompt" class="install-prompt">
+        <div class="install-prompt-content">
+            <div class="install-prompt-text">
+                <h4>📱 Install Bus Tracker</h4>
+                <p>Add to home screen for quick access!</p>
+            </div>
+            <button id="installBtn" class="install-btn">Install</button>
+            <button id="closeInstall" class="close-install">×</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Home Page -->
+        <div id="homePage">
+            <div class="header">
+                <h1>🚌 Where Is My Bus</h1>
+            </div>
+
+            <div class="route-card">
+                <div class="route-inputs">
+                    <div style="position: relative;">
+                        <input type="text" class="route-input" id="fromInput" placeholder="From">
+                        <div class="autocomplete-dropdown" id="fromDropdown"></div>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="text" class="route-input" id="toInput" placeholder="To">
+                        <div class="autocomplete-dropdown" id="toDropdown"></div>
+                    </div>
+                </div>
+                <button class="find-btn" onclick="findBuses()">Find Buses</button>
+            </div>
+
+            <div class="search-container">
+                <div style="position: relative;">
+                    <input type="text" class="search-input" id="busSearch" placeholder="Enter Bus number or name">
+                    <div class="autocomplete-dropdown" id="busDropdown"></div>
+                </div>
+            </div>
+
+            <div class="search-history" id="searchHistory" style="display: none;">
+                <h3>🕒 Recent Searches</h3>
+                <div id="historyList"></div>
+            </div>
+        </div>
+
+        <!-- Bus List Page -->
+        <div id="busListPage" class="hidden">
+            <div class="header">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <h1 id="routeTitle">Available Buses</h1>
+            </div>
+            <div class="bus-list" id="busList"></div>
+        </div>
+
+        <!-- Tracking Page -->
+        <div id="trackingPage" class="hidden">
+            <div class="header">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <h1 id="trackingTitle">Bus Tracking</h1>
+            </div>
+            <div class="tracking-page">
+                <div class="status-cards">
+                    <div class="status-card">
+                        <div class="status-title">Arrival</div>
+                        <div class="status-value" id="arrivalTime">10:30 AM</div>
+                        <div class="status-subvalue on-time" id="arrivalStatus">On Time</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-title">Location</div>
+                        <div class="status-value" id="currentLocation">Sector 10</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-title">Departure</div>
+                        <div class="status-value" id="departureTime">10:35 AM</div>
+                        <div class="status-subvalue on-time" id="departureStatus">Expected</div>
+                    </div>
+                </div>
+
+                <div class="route-tracker">
+                    <div class="route-line">
+                        <div class="route-stops" id="routeStops">
+                            <!-- Stops will be populated dynamically -->
+                        </div>
+                        <div class="route-path">
+                            <div class="route-progress" id="routeProgress"></div>
+                            <div class="bus-position" id="busPosition"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="seat-info">
+                    <div class="seat-count" id="availableSeats">23</div>
+                    <div class="seat-label">Available Seats out of <span id="totalSeats">45</span></div>
+                    <div class="seat-visual" id="seatVisual"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        const cities = ['Delhi', 'Rohtak', 'Gurgaon', 'Faridabad', 'Noida', 'Panipat', 'Sonipat', 'Karnal', 'Ambala', 'Chandigarh'];
+        
+        const busData = [
+            {
+                id: 1,
+                number: 'DL-456',
+                from: 'Delhi',
+                to: 'Rohtak',
+                startTime: '06:00 AM',
+                endTime: '08:30 AM',
+                duration: '2h 30m',
+                days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+                availableSeats: 23,
+                totalSeats: 45,
+                route: ['ISBT Delhi', 'Nangloi', 'Bahadurgarh', 'Sector 14 Rohtak', 'Bus Stand Rohtak'],
+                currentStop: 2
+            },
+            {
+                id: 2,
+                number: 'HR-789',
+                from: 'Rohtak',
+                to: 'Delhi', 
+                startTime: '07:15 AM',
+                endTime: '09:45 AM',
+                duration: '2h 30m',
+                days: ['M', 'T', 'W', 'T', 'F'],
+                availableSeats: 15,
+                totalSeats: 40,
+                route: ['Bus Stand Rohtak', 'Sector 14 Rohtak', 'Bahadurgarh', 'Nangloi', 'ISBT Delhi'],
+                currentStop: 1
+            },
+            {
+                id: 3,
+                number: 'HR-892',
+                from: 'Rohtak',
+                to: 'Delhi',
+                startTime: '09:00 AM',
+                endTime: '11:45 AM',
+                duration: '2h 45m',
+                days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+                availableSeats: 31,
+                totalSeats: 50,
+                route: ['Bus Stand Rohtak', 'Sector 3 Rohtak', 'Sampla', 'Bahadurgarh', 'Outer Ring Road', 'ISBT Delhi'],
+                currentStop: 1
+            },
+            {
+                id: 4,
+                number: 'DL-633',
+                from: 'Rohtak',
+                to: 'Delhi',
+                startTime: '10:30 AM',
+                endTime: '01:00 PM',
+                duration: '2h 30m',
+                days: ['M', 'T', 'W', 'T', 'F'],
+                availableSeats: 18,
+                totalSeats: 42,
+                route: ['Bus Stand Rohtak', 'MDU Rohtak', 'Kiloi', 'Bahadurgarh', 'Nangloi', 'ISBT Delhi'],
+                currentStop: 0
+            },
+            {
+                id: 5,
+                number: 'HR-445',
+                from: 'Rohtak',
+                to: 'Delhi',
+                startTime: '12:00 PM',
+                endTime: '02:30 PM',
+                duration: '2h 30m',
+                days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+                availableSeats: 27,
+                totalSeats: 48,
+                route: ['Bus Stand Rohtak', 'Sector 14 Rohtak', 'Jhajjar', 'Bahadurgarh', 'Peeragarhi', 'ISBT Delhi'],
+                currentStop: 2
+            },
+            {
+                id: 6,
+                number: 'DL-123',
+                from: 'Delhi',
+                to: 'Gurgaon',
+                startTime: '08:00 AM',
+                endTime: '09:30 AM',
+                duration: '1h 30m',
+                days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+                availableSeats: 8,
+                totalSeats: 35,
+                route: ['ISBT Delhi', 'Dhaula Kuan', 'MG Road', 'Cyber City', 'Gurgaon Station'],
+                currentStop: 3
+            },
+            {
+                id: 7,
+                number: 'DL-789',
+                from: 'Delhi',
+                to: 'Rohtak',
+                startTime: '02:00 PM',
+                endTime: '04:45 PM',
+                duration: '2h 45m',
+                days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+                availableSeats: 12,
+                totalSeats: 40,
+                route: ['ISBT Delhi', 'Outer Ring Road', 'Bahadurgarh', 'Sector 14 Rohtak', 'Bus Stand Rohtak'],
+                currentStop: 1
+            }
+        ];
+
+        let currentPage = 'home';
+        let currentBus = null;
+        let searchHistory = [];
+        let deferredPrompt;
+        let isOnline = navigator.onLine;
+
+        // Autocomplete functionality
+        function setupAutocomplete(inputId, dropdownId, data) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+
+            input.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                dropdown.innerHTML = '';
+                
+                if (value.length > 0) {
+                    const filtered = data.filter(item => 
+                        item.toLowerCase().includes(value)
+                    );
+                    
+                    if (filtered.length > 0) {
+                        filtered.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'autocomplete-item';
+                            div.textContent = item;
+                            div.onclick = () => {
+                                input.value = item;
+                                dropdown.style.display = 'none';
+                            };
+                            dropdown.appendChild(div);
+                        });
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                } else {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(() => {
+                    dropdown.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        // Initialize autocomplete
+        setupAutocomplete('fromInput', 'fromDropdown', cities);
+        setupAutocomplete('toInput', 'toDropdown', cities);
+        setupBusAutocomplete('busSearch', 'busDropdown', busData.map(bus => `${bus.number} - ${bus.from} to ${bus.to}`));
+
+        function setupBusAutocomplete(inputId, dropdownId, data) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+
+            input.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                dropdown.innerHTML = '';
+                
+                if (value.length > 0) {
+                    const filtered = data.filter(item => 
+                        item.toLowerCase().includes(value)
+                    );
+                    
+                    if (filtered.length > 0) {
+                        filtered.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'autocomplete-item';
+                            div.textContent = item;
+                            div.onclick = () => {
+                                input.value = item;
+                                dropdown.style.display = 'none';
+                                // Find the bus and navigate to tracking
+                                const busNumber = item.split(' - ')[0];
+                                const bus = busData.find(b => b.number === busNumber);
+                                if (bus) {
+                                    addToSearchHistory(bus);
+                                    showTracking(bus);
+                                }
+                            };
+                            dropdown.appendChild(div);
+                        });
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                } else {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(() => {
+                    dropdown.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        function findBuses() {
+            const from = document.getElementById('fromInput').value;
+            const to = document.getElementById('toInput').value;
+            
+            if (!from || !to) {
+                alert('Please enter both From and To locations');
+                return;
+            }
+
+            // Filter buses based on route
+            const filteredBuses = busData.filter(bus => 
+                bus.from.toLowerCase().includes(from.toLowerCase()) && 
+                bus.to.toLowerCase().includes(to.toLowerCase())
+            );
+
+            showBusList(filteredBuses, `${from} → ${to}`);
+        }
+
+        function showBusList(buses, title) {
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('busListPage').classList.remove('hidden');
+            document.getElementById('routeTitle').textContent = title;
+            
+            const busList = document.getElementById('busList');
+            busList.innerHTML = '';
+
+            if (buses.length === 0) {
+                busList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No buses found for this route</div>';
+                return;
+            }
+
+            buses.forEach(bus => {
+                const busCard = document.createElement('div');
+                busCard.className = 'bus-card';
+                busCard.onclick = () => {
+                    addToSearchHistory(bus);
+                    showTracking(bus);
+                };
+                
+                busCard.innerHTML = `
+                    <div class="bus-header">
+                        <div class="bus-number">${bus.number}</div>
+                        <div class="bus-route">${bus.from} → ${bus.to}</div>
+                        <div class="seats-info">${bus.availableSeats}/${bus.totalSeats}</div>
+                    </div>
+                    <div class="bus-timing">
+                        <div class="timing-item">
+                            <div class="time">${bus.startTime}</div>
+                        </div>
+                        <div class="timing-item">
+                            <div class="duration">${bus.duration}</div>
+                        </div>
+                        <div class="timing-item">
+                            <div class="time">${bus.endTime}</div>
+                        </div>
+                    </div>
+                    <div class="bus-days">
+                        <span>Runs on:</span>
+                        <div class="days-list">
+                            ${bus.days.map(day => `<span class="day">${day}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                busList.appendChild(busCard);
+            });
+            
+            currentPage = 'list';
+        }
+
+        function showTracking(bus) {
+            currentBus = bus;
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('busListPage').classList.add('hidden');
+            document.getElementById('trackingPage').classList.remove('hidden');
+            document.getElementById('trackingTitle').textContent = `${bus.from} → ${bus.to}`;
+            
+            // Update status cards
+            document.getElementById('currentLocation').textContent = bus.route[bus.currentStop];
+            document.getElementById('availableSeats').textContent = bus.availableSeats;
+            document.getElementById('totalSeats').textContent = bus.totalSeats;
+            
+            // Create route visualization
+            createRouteVisualization(bus);
+            createSeatVisualization(bus);
+            
+            currentPage = 'tracking';
+            
+            // Start real-time updates
+            startRealTimeUpdates(bus);
+        }
+
+        function addToSearchHistory(bus) {
+            const historyItem = {
+                id: bus.id,
+                number: bus.number,
+                route: `${bus.from} → ${bus.to}`,
+                time: new Date().toLocaleTimeString('en-US', { 
+                    hour12: true, 
+                    hour: 'numeric', 
+                    minute: '2-digit' 
+                }),
+                timestamp: Date.now()
+            };
+
+            // Remove if already exists
+            searchHistory = searchHistory.filter(item => item.id !== bus.id);
+            
+            // Add to beginning
+            searchHistory.unshift(historyItem);
+            
+            // Keep only last 5 searches
+            if (searchHistory.length > 5) {
+                searchHistory = searchHistory.slice(0, 5);
+            }
+            
+            updateSearchHistoryDisplay();
+            saveSearchHistory(); // Save to storage
+        }
+
+        function updateSearchHistoryDisplay() {
+            const historyContainer = document.getElementById('searchHistory');
+            const historyList = document.getElementById('historyList');
+            
+            if (searchHistory.length === 0) {
+                historyContainer.style.display = 'none';
+                return;
+            }
+            
+            historyContainer.style.display = 'block';
+            historyList.innerHTML = '';
+            
+            searchHistory.forEach(item => {
+                const historyDiv = document.createElement('div');
+                historyDiv.className = 'history-item';
+                historyDiv.onclick = () => {
+                    const bus = busData.find(b => b.id === item.id);
+                    if (bus) {
+                        showTracking(bus);
+                    }
+                };
+                
+                historyDiv.innerHTML = `
+                    <div class="history-bus-number">${item.number}</div>
+                    <div class="history-route">${item.route}</div>
+                    <div class="history-time">Searched at ${item.time}</div>
+                `;
+                
+                historyList.appendChild(historyDiv);
+            });
+        }
+
+        function createRouteVisualization(bus) {
+            const routeStops = document.getElementById('routeStops');
+            const routeProgress = document.getElementById('routeProgress');
+            const busPosition = document.getElementById('busPosition');
+            
+            routeStops.innerHTML = '';
+            
+            bus.route.forEach((stop, index) => {
+                const stopDiv = document.createElement('div');
+                stopDiv.className = `stop ${index < bus.currentStop ? 'completed' : ''} ${index === bus.currentStop ? 'active' : ''}`;
+                stopDiv.innerHTML = `
+                    <div class="stop-dot"></div>
+                    <div>${stop}</div>
+                `;
+                routeStops.appendChild(stopDiv);
+            });
+            
+            // Update progress
+            const progress = (bus.currentStop / (bus.route.length - 1)) * 100;
+            routeProgress.style.width = `${progress}%`;
+            busPosition.style.left = `${progress}%`;
+        }
+
+        function createSeatVisualization(bus) {
+            const seatVisual = document.getElementById('seatVisual');
+            seatVisual.innerHTML = '';
+            
+            for (let i = 0; i < bus.totalSeats; i++) {
+                const seat = document.createElement('div');
+                seat.className = `seat ${i < bus.availableSeats ? 'available' : 'occupied'}`;
+                seatVisual.appendChild(seat);
+            }
+        }
+
+        function startRealTimeUpdates(bus) {
+            // Simulate real-time updates
+            setInterval(() => {
+                if (currentPage === 'tracking' && currentBus && currentBus.id === bus.id) {
+                    // Randomly update seat availability
+                    const change = Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0;
+                    currentBus.availableSeats = Math.max(0, Math.min(currentBus.totalSeats, currentBus.availableSeats + change));
+                    
+                    document.getElementById('availableSeats').textContent = currentBus.availableSeats;
+                    createSeatVisualization(currentBus);
+                    
+                    // Update arrival status randomly
+                    const statuses = ['On Time', 'Delayed 2 min', 'Early 1 min'];
+                    const statusColors = ['on-time', 'delayed', 'on-time'];
+                    const randomStatus = Math.floor(Math.random() * statuses.length);
+                    
+                    const arrivalStatus = document.getElementById('arrivalStatus');
+                    arrivalStatus.textContent = statuses[randomStatus];
+                    arrivalStatus.className = `status-subvalue ${statusColors[randomStatus]}`;
+                }
+            }, 3000);
+        }
+
+        function goBack() {
+            if (currentPage === 'list') {
+                document.getElementById('busListPage').classList.add('hidden');
+                document.getElementById('homePage').classList.remove('hidden');
+                currentPage = 'home';
+            } else if (currentPage === 'tracking') {
+                document.getElementById('trackingPage').classList.add('hidden');
+                if (document.getElementById('busListPage').classList.contains('hidden')) {
+                    document.getElementById('homePage').classList.remove('hidden');
+                    currentPage = 'home';
+                } else {
+                    document.getElementById('busListPage').classList.remove('hidden');
+                    currentPage = 'list';
+                }
+            }
+        }
+
+        // Bus search functionality
+        document.getElementById('busSearch').addEventListener('input', function() {
+            const value = this.value.toLowerCase();
+            if (value.length > 2) {
+                const filtered = busData.filter(bus => 
+                    bus.number.toLowerCase().includes(value) ||
+                    bus.from.toLowerCase().includes(value) ||
+                    bus.to.toLowerCase().includes(value)
+                );
+                
+                if (filtered.length > 0) {
+                    showBusList(filtered, 'Search Results');
+                }
+            }
+        });
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Bus Tracker App Initialized');
+            
+            // Initialize PWA features
+            initializePWA();
+            
+            // Load search history from localStorage alternative (memory storage)
+            loadSearchHistory();
+        });
+
+        // PWA Initialization
+        function initializePWA() {
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                registerServiceWorker();
+            }
+
+            // Handle install prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showInstallPrompt();
+            });
+
+            // Handle online/offline status
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
+
+            // Install button click
+            document.getElementById('installBtn').addEventListener('click', installApp);
+            document.getElementById('closeInstall').addEventListener('click', hideInstallPrompt);
+
+            // Hide address bar on mobile when app loads
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 100);
+        }
+
+        function registerServiceWorker() {
+            const swCode = `
+                const CACHE_NAME = 'bus-tracker-v1';
+                const urlsToCache = [
+                    '/',
+                    '/index.html'
+                ];
+
+                self.addEventListener('install', (event) => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then((cache) => cache.addAll(urlsToCache))
+                    );
+                });
+
+                self.addEventListener('fetch', (event) => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then((response) => {
+                                if (response) {
+                                    return response;
+                                }
+                                return fetch(event.request);
+                            }
+                        )
+                    );
+                });
+            `;
+
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+
+            navigator.serviceWorker.register(swUrl)
+                .then((registration) => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch((registrationError) => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        }
+
+        function showInstallPrompt() {
+            const installPrompt = document.getElementById('installPrompt');
+            
+            // Don't show if already installed or dismissed
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return;
+            }
+            
+            setTimeout(() => {
+                installPrompt.style.display = 'block';
+            }, 3000); // Show after 3 seconds
+        }
+
+        function hideInstallPrompt() {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    hideInstallPrompt();
+                });
+            }
+        }
+
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            
+            if (navigator.onLine) {
+                if (!isOnline) {
+                    indicator.textContent = '📡 Back Online';
+                    indicator.className = 'offline-indicator online';
+                    indicator.style.display = 'block';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 3000);
+                    isOnline = true;
+                }
+            } else {
+                indicator.textContent = '📡 Offline Mode';
+                indicator.className = 'offline-indicator';
+                indicator.style.display = 'block';
+                isOnline = false;
+            }
+        }
+
+        function loadSearchHistory() {
+            // In a real app, you'd load from localStorage
+            // For now, we keep it in memory as before
+            updateSearchHistoryDisplay();
+        }
+
+        function saveSearchHistory() {
+            // In a real app, you'd save to localStorage
+            // For now, it's automatically saved in memory
+        }
+    </script>
+</body>
+</html>
