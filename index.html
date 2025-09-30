@@ -4,144 +4,498 @@
 <head>
     <meta charset="UTF-8">
     <title>Truth Over Noise - Ethan YT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- EmailJS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
-            --bg-light: #fff;
-            --bg-dark: #111;
-            --text-light: #222;
-            --text-dark: #fff;
-            --primary: #8f5cf6;
-            --border: rgba(255,255,255,0.45);
+            --color-bg: #fff;
+            --color-text: #222;
+            --color-card: #f5f4f7;
+            --color-border: #dfdfdf;
+            --color-input: #f9f9fc;
+            --color-placeholder: #888;
+            --color-footer-bg: #f4f2fb;
+            --color-footer-border: #ece6fb;
+            --color-btn-bg: #e6ddff;
+            --color-btn-hover: #dac7ff;
+            --color-toast: #8f5cf6;
+            --color-toast-success: #27ae60;
+            --color-toast-error: #e74c3c;
+            --color-primary: #8f5cf6;
         }
 
         body {
             margin: 0;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.3s, color 0.3s;
-            background: var(--bg-light);
-            color: var(--text-light);
+            font-family: 'Inter', Arial, sans-serif;
             min-height: 100vh;
-            position: relative;
+            background: var(--color-bg);
+            color: var(--color-text);
+            transition: background .3s, color .3s;
         }
+
         body.dark {
-            background: var(--bg-dark);
-            color: var(--text-dark);
-            --border: rgba(26, 25, 25, 0.523);
+            --color-bg: #121212;
+            --color-text: #f8f8f8;
+            --color-card: #232137;
+            --color-border: #44425a;
+            --color-input: #19182b;
+            --color-placeholder: #aaa;
+            --color-footer-bg: #18172a;
+            --color-footer-border: #2d263e;
+            --color-btn-bg: #292357;
+            --color-btn-hover: #382c84;
+            --color-toast: #8d5bee;
         }
 
-        .center { display: flex; align-items: center; justify-content: center; }
-        .container { max-width: 900px; margin: auto; padding: 0 16px; }
-        h1, h2, h3 { font-weight: bold; }
-        h1 { font-size: 3rem; margin-top: 0; }
-        h2 { font-size: 2rem; }
-        .absolute { position: absolute; }
+        .container {
+            max-width: 520px;
+            width: 100vw;
+            margin: auto;
+            padding: 0 14px;
+        }
 
-        .profile-pic { width: 200px; height: 200px; border-radius: 50%; border: 4px solid #eee; object-fit: cover; box-shadow: 0 2px 32px rgba(0,0,0,.17);}
-        .profile-pic.change {cursor: pointer;}
+        @media(min-width:600px) {
+            .container {
+                max-width: 700px;
+            }
+        }
 
-        .social-links { display: flex; gap: 24px; justify-content: center; margin-top: 22px;}
-        .social-link svg { width: 32px; height: 32px; fill: gray; filter: grayscale(1); transition: .3s;}
-        .social-link:hover svg { filter: grayscale(0);}
-        .theme-toggle { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border-radius: 50%; border: 1px solid var(--border); padding:12px; font-size:2rem; cursor:pointer;}
-        .dark .theme-toggle { background: rgba(255,255,255,0.08);}
-        section { margin-bottom: 50px;}
+        @media(min-width:900px) {
+            .container {
+                max-width: 900px;
+            }
+        }
 
-        .btn, button, input[type="submit"] { display:inline-block; background:rgba(255,255,255,0.08); color:inherit; border: 1px solid var(--border); border-radius: 10px; padding:10px 20px; font-weight:600; cursor:pointer; margin-top:10px; transition:.2s; min-width:100px;}
-        .btn:hover, button:hover { background:rgba(255,255,255,0.15);}
-        .input, textarea, select { border-radius:10px; border:1px solid lightslategray; background:rgba(255,255,255,0.05); color:inherit; padding:12px; width:100%; margin-bottom:12px; font-size:1rem; outline:none; transition:.2s; }
-        .input:focus, textarea:focus { border:1px solid var(--primary);}
-        .card { background:rgba(255,255,255,0.08); border-radius:20px; border:1px solid var(--border); box-shadow:0 2px 32px rgba(0,0,0,0.06); margin: 20px 0; padding:24px;}
-        .card.expand {background:rgba(255,255,255,0.16);}
-        .cards-row {display:flex; gap:24px; flex-wrap:wrap;}
-        @media(max-width:800px) { .cards-row {flex-direction:column;} }
-        .footer {text-align:center; color:#aaa; font-size:.96rem; border-top:1px solid var(--border); padding: 20px 0; margin-top:36px;}
+        h1,
+        h2,
+        h3 {
+            font-weight: bold;
+        }
 
-        /* Animations */
-        .animate-bounce {animation: bounce .9s infinite;}
-        @keyframes bounce {0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin: 0.9em 0 0.5em 0;
+        }
 
-        /* Simple toast */
-        .toast {z-index:999; position:fixed; left:50%; top:44px; transform:translateX(-50%); color:#fff; background:var(--primary); padding:14px 30px; border-radius:20px; font-weight:500; box-shadow:0 2px 16px rgba(0,0,0,.11);}
-        .toast.error {background:#e74c3c;}
-        .toast.success {background:#27ae60;}
-        /* Dark mode tweaks */
-        body.dark input, body.dark textarea, body.dark .card, body.dark .btn, body.dark button, body.dark .footer { background:rgba(255,255,255,0.04); color:var(--text-dark); border-color:rgba(255,255,255,0.50);}
-        body.dark .input:focus, body.dark textarea:focus {border-color:var(--primary);}
-        body.dark .footer {border-top:1px solid rgba(255,255,255,0.15);}
+        h2 {
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 1em 0 0.3em 0;
+        }
+
+        @media(max-width:400px) {
+            h1 {
+                font-size: 1.15rem;
+            }
+
+            h2 {
+                font-size: 1rem;
+            }
+        }
+
+        .center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        section {
+            margin-bottom: 32px;
+        }
+
+        .profile-pic {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 4px solid var(--color-border);
+            object-fit: cover;
+            box-shadow: 0 2px 18px rgba(0, 0, 0, .09);
+            background: #fff;
+            cursor: pointer;
+            transition: transform .2s;
+            margin-bottom: 0.6rem;
+        }
+
+        @media(min-width:860px) {
+            .profile-pic {
+                width: 180px;
+                height: 180px;
+            }
+        }
+
+        .social-links {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .social-link svg {
+            width: 26px;
+            height: 26px;
+            fill: gray;
+            filter: grayscale(1);
+            transition: .3s;
+        }
+
+        .social-link:hover svg {
+            filter: grayscale(0);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 13px;
+            right: 15px;
+            background: rgba(143, 92, 246, 0.13);
+            border-radius: 50%;
+            border: 1px solid var(--color-border);
+            padding: 11px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+            color: var(--color-text);
+        }
+
+        .card {
+            background: var(--color-card);
+            border-radius: 15px;
+            border: 1.6px solid var(--color-border);
+            box-shadow: 0 2px 20px rgba(40, 23, 61, 0.06);
+            margin: 15px 0;
+            padding: 1.18rem;
+            width: 100%;
+            /* max-width:300px; */
+            box-sizing: border-box;
+            color: var(--color-text);
+            transition: background .3s, border .3s, color .3s;
+        }
+
+        .card.expand {
+            background: rgba(143, 92, 246, 0.07);
+        }
+
+        .cards-row {
+            display: flex;
+            gap: 13px;
+            flex-wrap: wrap;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        @media(min-width:680px) {
+            .cards-row {
+                flex-direction: row;
+            }
+
+            .card {
+                max-width: 46%;
+            }
+        }
+
+        .btn,
+        button,
+        input[type=submit] {
+            display: inline-block;
+            background: var(--color-btn-bg);
+            color: var(--color-text);
+            border-radius: 9px;
+            border: 1.5px solid var(--color-border);
+            padding: 11px 0;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: .2s;
+            font-size: 1.07rem;
+            max-width: 350px;
+        }
+
+        .btn:hover,
+        button:hover {
+            background: var(--color-btn-hover);
+        }
+
+        .input,
+        textarea,
+        select {
+            border-radius: 9px;
+            border: 1.5px solid var(--color-border);
+            background: var(--color-input);
+            color: var(--color-text);
+            padding: 13px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: .18s;
+        }
+
+        .input:focus,
+        textarea:focus {
+            border: 1.6px solid var(--color-primary);
+        }
+
+        textarea {
+            min-height: 74px;
+        }
+
+        .input::placeholder,
+        textarea::placeholder {
+            color: var(--color-placeholder);
+        }
+
+        @media(max-width:400px) {
+
+            .input,
+            textarea,
+            .btn,
+            button {
+                font-size: 0.96rem;
+            }
+
+            .card {
+                padding: 0.7rem;
+            }
+        }
+
+        /* AI Roast generator form centering */
+        #roast-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #roast-topic {
+            margin-bottom: 0;
+        }
+
+        #roast-btn {
+            margin-top: 0;
+        }
+
+        @media(min-width:600px) {
+            #roast-form {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            #roast-topic {
+                margin-bottom: 0;
+                margin-right: 8px;
+            }
+
+            #roast-btn {
+                max-width: 150px;
+                width: 150px;
+            }
+        }
+
+        /* result box */
+        #roast-result {
+            width: 100%;
+            border-radius: 10px;
+            padding: 15px 5px 5px 5px;
+            word-break: break-word;
+            margin-top: 13px;
+            font-size: 1.06rem;
+        }
+
+        .footer {
+            background: var(--color-footer-bg);
+            color: #888;
+            font-size: .98rem;
+            border-top: 1.5px solid var(--color-footer-border);
+            padding: 19px 0 0 0;
+            margin-top: 19px;
+            text-align: center;
+        }
+
+        .animate-bounce {
+            animation: bounce .9s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .toast {
+            z-index: 999;
+            position: fixed;
+            left: 50vw;
+            top: 44px;
+            transform: translateX(-50%);
+            color: #fff;
+            background: var(--color-toast);
+            padding: 14px 15px;
+            border-radius: 15px;
+            font-weight: 500;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .11);
+            font-size: 1rem;
+            min-width: 130px;
+            text-align: center;
+        }
+
+        .toast.error {
+            background: var(--color-toast-error) !important;
+        }
+
+        .toast.success {
+            background: var(--color-toast-success) !important;
+        }
+
+        body.dark .footer {
+            border-top: 1.5px solid var(--color-footer-border);
+        }
+
+        body.dark .card {
+            background: var(--color-card);
+            color: var(--color-text);
+        }
+
+        body.dark .btn,
+        body.dark button,
+        body.dark input[type=submit] {
+            background: var(--color-btn-bg);
+            color: var(--color-text);
+        }
+
+        body.dark .btn:hover,
+        body.dark button:hover {
+            background: var(--color-btn-hover);
+            color: var(--color-text);
+        }
+
+        body.dark .input,
+        body.dark textarea {
+            background: var(--color-input);
+            color: var(--color-text);
+        }
+
+        body.dark .input:focus,
+        body.dark textarea:focus {
+            border-color: var(--color-primary);
+        }
+
+        body.dark .toast {
+            background: var(--color-toast);
+        }
+
+        @media(max-width:340px) {
+            .container {
+                padding-left: 2vw;
+                padding-right: 2vw;
+            }
+
+            .card {
+                padding: 0.5rem;
+            }
+
+            .input,
+            textarea,
+            .btn,
+            button {
+                font-size: 0.96rem;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="theme-toggle" id="theme-toggle">🌙</div>
-
     <main class="container">
-        <section class="center" style="flex-direction:column; gap:24px;">
-            <div style="position:relative;" class="center flex-col">
-                <img src="https://placehold.co/200x200/000/fff?text=Ethan" id="profilepic" alt="Profile Photo" class="profile-pic change" title="Change photo">
-                <input type="file" id="picupload" style="display:none;" accept="image/*">
-            </div>
-            <h1 style="margin-bottom:8px;">Truth Over Noise</h1>
-            <p style="max-width:500px;text-align:center; color: #666;">I create fearless roasts, honest commentary and hard-hitting truths.</p>
+        <section class="center" style="flex-direction:column; gap:16px;">
+            <img src="https://placehold.co/120x120/000/fff?text=Ethan" id="profilepic" alt="Profile Photo"
+                class="profile-pic change" title="Change photo">
+            <input type="file" id="picupload" style="display:none;" accept="image/*">
+            <h1>Truth Over Noise</h1>
+            <p style="max-width:410px;margin:auto;text-align:center; color: #666;">
+                I create fearless roasts, honest commentary and hard-hitting truths.
+            </p>
             <div class="social-links">
                 <a class="social-link" href="https://www.youtube.com/@ethan__yt" target="_blank" title="YouTube">
-                    <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                </a>
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
+                    </svg> </a>
                 <a class="social-link" href="https://www.instagram.com/_ethan_yt/" target="_blank" title="Instagram">
-                    <svg viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.2,5.2 0 0,1 16.2,21.4H7.8C4.6,21.4 2,18.8 2,15.6V7.8A5.2,5.2 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
-                </a>
-                <a class="social-link" href="https://www.facebook.com/profile.php?id=61579750167924" target="_blank" title="Facebook">
-                    <svg viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
-                </a>
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.2,5.2 0 0,1 16.2,21.4H7.8C4.6,21.4 2,18.8 2,15.6V7.8A5.2,5.2 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
+                    </svg> </a>
+                <a class="social-link" href="https://www.facebook.com/profile.php?id=61579750167924" target="_blank"
+                    title="Facebook">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
+                    </svg> </a>
                 <a class="social-link" href="https://x.com/ethanyt08" target="_blank" title="X">
-                    <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.931ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
-                </a>
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.931ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                    </svg> </a>
             </div>
-            <div style="margin-top:38px;">
-                <div class="center animate-bounce" style="height:40px;">
-                    <div style="width:10px;height:20px;border-radius:40px;border:2px solid #888;display:flex;align-items:flex-start;justify-content:center;">
-                        <div style="width:4px;height:8px;border-radius:40px;background:#888;"></div>
-                    </div>
+            <div style="margin-top:28px;" class="center animate-bounce">
+                <div
+                    style="width:10px;height:20px;border-radius:40px;border:2px solid #888;display:flex;align-items:flex-start;justify-content:center;">
+                    <div style="width:4px;height:8px;border-radius:40px;background:#888;"></div>
                 </div>
             </div>
         </section>
-
+        <!-- AI Roast Generator -->
         <section>
-            <h2 class="center">AI Roast Generator</h2>
-            <div class="card center" style="max-width:510px; display: flex; flex-direction: column;  margin:auto; justify-content: center; align-items: center; border: 1px solid gray;">
-                <div style="display: flex; align-items: center;justify-content: center;">
-                    <input id="roast-topic" type="text" class="input" style="min-width: 300px;" placeholder="Example: 'Influencers who sell products'">
-                    &nbsp;&nbsp;&nbsp;&nbsp;
-                    <button id="roast-btn" style="margin-top: -10px; padding: 14px; background-color: #8f5cf6; color: white;">Roast It!</button>
-                </div>
-                <div id="roast-result" style="min-width: 410px; border-radius: 10px;padding: 15px; margin-top: 25px;"></div>
+            <h2>AI Roast Generator</h2>
+            <div class="card center" style="flex-direction:column;">
+                <form id="roast-form" autocomplete="off">
+                    <input id="roast-topic" type="text" class="input" style="max-width:380px;"
+                        placeholder="Jaise: 'Influencers who sell products'" autocomplete="off">
+                    <button id="roast-btn" class="btn" style="max-width:140px;" type="submit">Roast It!</button>
+                </form>
+                <div id="roast-result"></div>
             </div>
         </section>
-
+        <!-- Connect With Me -->
         <section>
-            <h2 class="center">Connect With Me</h2>
-            <div class="cards-row" style="margin-top:34px;">
-                <div class="card" id="card-idea" style="cursor: pointer;">
+            <h2>Connect With Me</h2>
+            <div class="cards-row">
+                <div class="card" id="card-idea" style="cursor:pointer;">
                     <h3>💡 Suggest an Idea</h3>
-                    <p>For followers with a topic suggestion.</p>
+                    <p style="margin-top:0.1em;">For followers with a topic suggestion.</p>
                     <form id="form-idea" style="display:none;">
                         <input type="hidden" name="to_email" value="ethanyt5525@gmail.com">
-                        <input type="text" name="name" class="input" placeholder="Your Name" required>
-                        <input type="email" name="email" class="input" placeholder="Your Email" required>
-                        <textarea name="message" class="input" placeholder="Your Idea / Topic" required rows="4"></textarea>
+                        <input type="text" name="name" class="input" placeholder="Your Name" required
+                            autocomplete="name">
+                        <input type="email" name="email" class="input" placeholder="Your Email" required
+                            autocomplete="email">
+                        <textarea name="message" class="input" placeholder="Your Idea / Topic" required
+                            rows="4"></textarea>
                         <input type="submit" class="btn" value="💡 Send Idea">
                     </form>
                 </div>
-                <div class="card" id="card-collab" style="cursor: pointer;">
+                <div class="card" id="card-collab" style="cursor:pointer;">
                     <h3>🤝 Brand Collaboration</h3>
-                    <p>For companies looking to partner.</p>
+                    <p style="margin-top:0.1em;">For companies looking to partner.</p>
                     <form id="form-collab" style="display:none;">
                         <input type="hidden" name="to_email" value="ethanyt5525@gmail.com">
-                        <input type="text" name="name" class="input" placeholder="Your Name" required>
-                        <input type="text" name="brand" class="input" placeholder="Brand/Company" required>
-                        <input type="email" name="email" class="input" placeholder="Your Email" required>
+                        <input type="text" name="name" class="input" placeholder="Your Name" required
+                            autocomplete="name">
+                        <input type="text" name="brand" class="input" placeholder="Brand/Company" required
+                            autocomplete="organization">
+                        <input type="email" name="email" class="input" placeholder="Your Email" required
+                            autocomplete="email">
                         <textarea name="message" class="input" placeholder="Your Message" required rows="4"></textarea>
                         <input type="submit" class="btn" value="🤝 Contact for Collaboration">
                     </form>
@@ -151,7 +505,6 @@
     </main>
     <div class="footer">© 2025 Ethan YT. All Rights Reserved.</div>
     <div id="toast" style="display:none;"></div>
-
     <script>
         // DARK MODE
         const themeToggle = document.getElementById('theme-toggle');
@@ -160,11 +513,7 @@
             localStorage.setItem('ethan-yt-theme', isDark ? 'dark' : 'light');
             themeToggle.textContent = isDark ? '☀️' : '🌙';
         }
-        if (localStorage.getItem('ethan-yt-theme') === 'dark') {
-            document.body.classList.add('dark');
-            themeToggle.textContent = '☀️';
-        }
-
+        if (localStorage.getItem('ethan-yt-theme') === 'dark') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
         // PROFILE PIC UPLOAD
         const profilePic = document.getElementById('profilepic');
         const picUpload = document.getElementById('picupload');
@@ -177,7 +526,6 @@
                 reader.readAsDataURL(file);
             }
         }
-        // TOAST utility
         function showToast(msg, type = "info") {
             const t = document.getElementById('toast');
             t.textContent = msg;
@@ -185,40 +533,31 @@
             t.style.display = '';
             setTimeout(() => t.style.display = 'none', 3000);
         }
-
-        // ROAST GENERATOR: Gemini API (You must use your own key)
-        document.getElementById('roast-btn').onclick = async function () {
+        // ROAST GENERATOR: Gemini API (Insert your Gemini API key below!)
+        document.getElementById('roast-form').onsubmit = async function (ev) {
+            ev.preventDefault();
             const topic = document.getElementById('roast-topic').value.trim();
             const resultDiv = document.getElementById('roast-result');
             if (!topic) { resultDiv.textContent = "Please enter a topic to roast first."; return; }
             resultDiv.textContent = "Roasting...";
             try {
-                // Insert your actual Gemini API key here:
-                const apiKey = "";
+                const apiKey = "AIzaSyDXBrCx8yQ3lKzBhToY-L0wXywk3lQ9wEY"; // <-- Insert Gemini API key!
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                const userPrompt = `You are Ethan YT, a creator known for fearless roasts and honest commentary. Your motto is 'Truth Over Noise'. Write a short, witty, and hard-hitting roast about the following topic: "${topic}". Keep it concise and in your signature style.`;
-                const response = await fetch(apiUrl, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: userPrompt }] }] })
-                });
+                const userPrompt = `You are Ethan YT, a creator known for fearless roasts and honest commentary. Write a short, witty, and hard-hitting roast about the following topic: "${topic}".`;
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: userPrompt }] }] }) });
                 if (!response.ok) throw "API error";
                 const result = await response.json();
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, the AI couldn't come up with a roast. Try another topic.";
                 resultDiv.textContent = text;
-            } catch (e) {
-                resultDiv.textContent = "Something went wrong. Please check the console and try again later.";
-            }
+            } catch (e) { resultDiv.textContent = "Something went wrong. Please check the console and try again later."; }
         };
-
         // CARD EXPAND/COLLAPSE
         let expanded = null;
         ['card-idea', 'card-collab'].forEach(id => {
             const card = document.getElementById(id);
             card.onclick = function (ev) {
-                // Prevent collapse if the click originated from inside a form/input
                 if (ev.target.closest('form')) return;
                 if (expanded !== id) {
-                    // expand
                     if (expanded) {
                         document.getElementById(expanded).classList.remove('expand');
                         document.getElementById(`form-${expanded.split('-')[1]}`).style.display = 'none';
@@ -227,7 +566,6 @@
                     document.getElementById(`form-${id.split('-')[1]}`).style.display = '';
                     expanded = id;
                 } else {
-                    // collapse
                     card.classList.remove('expand');
                     document.getElementById(`form-${id.split('-')[1]}`).style.display = 'none';
                     expanded = null;
@@ -235,9 +573,8 @@
                 ev.stopPropagation();
             }
         });
-        // Prevent form click from propagating to card/body (so input focus and typing works)
         ['form-idea', 'form-collab'].forEach(formId => {
-            document.getElementById(formId).addEventListener('click', function(ev){
+            document.getElementById(formId).addEventListener('click', function (ev) {
                 ev.stopPropagation();
             });
         });
@@ -248,7 +585,6 @@
                 expanded = null;
             }
         });
-
         // EMAILJS INIT
         emailjs.init('rZWHvfqeCE-1Keio4');
         function sendEmailJsForm(formId, templateId) {
@@ -262,9 +598,7 @@
                         form.reset(); form.style.display = 'none';
                         if (formId === 'form-collab') { document.getElementById('card-collab').classList.remove('expand'); expanded = null; }
                         else { document.getElementById('card-idea').classList.remove('expand'); expanded = null; }
-                    }, () => {
-                        showToast("Something went wrong. Please try again.", "error");
-                    });
+                    }, () => { showToast("Something went wrong. Please try again.", "error"); });
             }
         }
         sendEmailJsForm('form-idea', 'template_ky8bpi7');
